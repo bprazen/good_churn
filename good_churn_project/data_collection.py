@@ -9,13 +9,13 @@ def user_df(db, db_user, table):
     conn = pg2.connect(dbname=db, user=db_user, host='localhost')
     cur = conn.cursor()
     sql ='''
-    SELECT sender_id, MIN(created_at) AS start_date, MAX(created_at) AS stop_date
+    SELECT sender_id, MIN(created_at) AS start_date, MAX(created_at) AS stop_date, count(created_at) AS activity_count
     FROM {}
     GROUP BY sender_id
     ;
     '''.format(table)
     cur.execute(sql)
-    user_table = pd.DataFrame(cur.fetchall(), columns= ['user_id', 'start_date', 'stop_date'])
+    user_table = pd.DataFrame(cur.fetchall(), columns= ['user_id', 'start_date', 'stop_date', 'activity_count'])
     conn.close()
     return user_table
 
@@ -72,3 +72,33 @@ def user_stats_df(db, db_user, table):
                                                       index=['app_user','first_use', 'last_use', 'time_with_app', 'num_uses',
                                                              'min_away', 'max_away', 'avg_away', 'median_away']), ignore_index=True)
     return user_stats
+
+    def create_activity_table(db, db_user):
+    # Create a PostgreSQL table containing user activity from multiple tables
+    # This wil be used to classify users as active and inactive during different periods
+    #
+    conn = pg2.connect(dbname=db, user=db_user, host='localhost')
+    cur = conn.cursor()
+    cur.execute('''CREATE TABLE activity AS
+    SELECT sender_id AS user_id, created_at AS date, id, 'notifications' AS type
+    FROM notifications
+    ''')
+    cur.execute('''INSERT INTO activity
+    SELECT user_id, created_at AS date, id, 'answer_likes' AS type
+    FROM answer_likes
+    ''')
+    cur.execute('''INSERT INTO activity
+    SELECT user_id, created_at AS date, id, 'answers' AS type
+    FROM answers
+    ''')
+    cur.execute('''INSERT INTO activity
+    SELECT from_user_id AS user_id, created_at AS date, id, 'connections' AS type
+    FROM connections
+    ''')
+    conn.commit()
+    cur.execute('''SELECT count(*)
+    FROM activity
+    ''')
+    table_size = cur.fetchall()
+    conn.close()
+    return table_size 

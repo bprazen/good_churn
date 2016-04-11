@@ -71,9 +71,10 @@ def user_stats_df(db, db_user, table):
                                                        activity_dates['dif_time'].median()],
                                                       index=['app_user','first_use', 'last_use', 'time_with_app', 'num_uses',
                                                              'min_away', 'max_away', 'avg_away', 'median_away']), ignore_index=True)
-    return user_stats
 
-    def create_activity_table(db, db_user):
+        return user_stats
+
+def create_activity_table(db, db_user):
     # Create a PostgreSQL table containing user activity from multiple tables
     # This wil be used to classify users as active and inactive during different periods
     #
@@ -101,4 +102,27 @@ def user_stats_df(db, db_user, table):
     ''')
     table_size = cur.fetchall()
     conn.close()
-    return table_size 
+    return table_size
+
+
+def count_active(db, db_user, table, last_date):
+    # Count the users that are active beyond a date. Last date formated like '2016-03-01'
+    #
+    #
+    conn = pg2.connect(dbname=db, user=db_user, host='localhost')
+    cur = conn.cursor()
+    sql = '''WITH    churn AS
+    (
+    SELECT (MAX(date) > '{}') AS still_in
+    FROM activity
+    GROUP BY user_id
+    )
+    SELECT COUNT (still_in)
+    FROM churn
+    WHERE still_in = 't'
+    LIMIT 50;
+    '''.format(last_date)
+    cur.execute(sql)
+    count = cur.fetchall()
+    conn.close()
+    return count

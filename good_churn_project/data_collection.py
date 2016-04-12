@@ -121,7 +121,7 @@ def count_active(db, db_user, table, last_date):
     SELECT COUNT (still_in)
     FROM churn
     WHERE still_in = 't'
-    LIMIT 50;
+    ;
     '''.format(last_date)
     cur.execute(sql)
     count = cur.fetchall()
@@ -179,4 +179,57 @@ def idendify_good_churn_user(db, db_user, table, app_user, leave_time, prechurn_
         churn = idendify_good_churn_user(db, db_user, table, user_id, leave_time, prechurn_time, prechurn_act, postchurn_time, postchurn_act)
         good_churns = good_churns.append(churn, ignore_index=True)
     return good_churns
-        
+
+def idendify_bad_churn_users(db, db_user, table, time_gone, prechurn_act):
+    # Create a Pandas DataFrame containing the time users that qualify
+    # as bad churn given the user_ids, time_gone (days) and  prechurn activity.
+    #
+    date_of_leave = pd.tslib.Timestamp('2016-04-04')-pd.tslib.Timedelta(days=time_gone)
+    date_of_leave = str(date_of_leave.date())
+    conn = pg2.connect(dbname=db, user=db_user, host='localhost')
+    cur = conn.cursor()
+    sql = '''WITH churn AS
+    (
+    SELECT user_id, MAX(date) AS last_day, count(date) AS activity_count, (MAX(date) > '{}') AS still_in
+    FROM activity
+    GROUP BY user_id
+    )
+    SELECT user_id, last_day, activity_count
+    FROM churn
+    WHERE still_in = 'f'
+    and activity_count > {}
+    ;
+    '''.format(date_of_leave, prechurn_act)
+    cur.execute(sql)
+    bad_churn = pd.DataFrame(cur.fetchall(), columns= ['user_id', 'last_day', 'activity_count'])
+    conn.close()
+    return bad_churn
+
+
+def idendify_test_users(db, db_user, table, time_gone_low, time_gone_high, prechurn_act):
+    # Create a Pandas DataFrame containing users that will serve as test data
+    # given a time window of interest and prechurn activity.
+    #
+    date__gone_high = pd.tslib.Timestamp('2016-04-04')-pd.tslib.Timedelta(days=time_gone_low)
+    date__gone_low = pd.tslib.Timestamp('2016-04-04')-pd.tslib.Timedelta(days=time_gone_high)
+    date__gone_high = str(date__gone_high.date())
+    date__gone_low = str(date__gone_low.date())
+
+    conn = pg2.connect(dbname=db, user=db_user, host='localhost')
+    cur = conn.cursor()
+    sql = '''WITH test AS
+    (
+    SELECT user_id, MAX(date) AS last_day, count(date) AS activity_count, (MAX(date) > '{}' AND MAX(date) < '{}') AS in_window
+    FROM activity
+    GROUP BY user_id
+    )
+    SELECT user_id, last_day, activity_count
+    FROM test
+    WHERE in_window = 't'
+    and activity_count > {}
+    ;
+    '''.format(date__gone_low, date__gone_high, prechurn_act)
+    cur.execute(sql)
+    test_data = pd.DataFrame(cur.fetchall(), columns= ['user_id', 'last_day', 'activity_count'])
+    conn.close()
+    return test_data

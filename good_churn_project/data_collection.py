@@ -1,5 +1,6 @@
 import psycopg2 as pg2
 import pandas as pd
+from sqlalchemy import create_engine
 
 # note: need to determine how to deal with tables that have user_id insted of sender_id
 def user_df(db, db_user, table):
@@ -126,3 +127,56 @@ def count_active(db, db_user, table, last_date):
     count = cur.fetchall()
     conn.close()
     return count
+
+def record_table(db, db_user, table):
+    # Save tables that are timeconsuming to creat in postgreSQL DB
+    engine_str = 'postgresql://{}@localhost:5432/{}'.format(db_user, db)
+    engine = create_engine(engine_str)
+    user_stats.to_sql(table, engine)
+    return
+
+def activity_dates_range_df(db, db_user, table, app_user, date1, date2):
+    # Create a Pandas DataFrame containing the activity date and id
+    # for a given app user over a period between date1 and date2.
+    #
+    conn = pg2.connect(dbname=db, user=db_user, host='localhost')
+    cur = conn.cursor()
+    sql = "SELECT date, id FROM {} WHERE user_id = {} AND date > '{}' AND date < '{}';".format(table, int(app_user), date1, date2)
+    cur.execute(sql)
+    activity_dates = pd.DataFrame(cur.fetchall(), columns= ['date', 'id']).sort(['date'], ascending=True)
+    conn.close()
+    activity_dates = activity_dates.reset_index(drop=True)
+    return activity_dates
+
+def idendify_good_churn_user(db, db_user, table, app_user, leave_time, prechurn_time, prechurn_act, postchurn_time, postchurn_act):
+    # Create a Pandas DataFrame containing the time regions that qualify
+    # as good churn for a user given the leave_time (days), prechurn_time (days), prechurn activity
+    # postchurn_time (days) and postchurn activity.
+    #
+    act_one_user = activity_dates_df(db, db_user, table, app_user)
+    activity_on_leaving = act_one_user[act_one_user.dif_time > pd.tslib.Timedelta(days=leave_time)]
+    activity_on_leaving = activity_on_leaving.reset_index(drop=True)
+    good_churns = pd.DataFrame(columns= ['user_id', 'churn_date', 'No_prechurn_activities', 'No_postchurn_activities'])
+    for index, row in activity_on_leaving.iterrows():
+        date1 = str(row.date.date()-pd.tslib.Timedelta(days=14))
+        date2 = str(row.date.date())
+        pre_leave_df = activity_dates_range_df(db, db_user, table, app_user, date1, date2)
+        date1 = str(row.next.date())
+        date2 = str(row.next.date()+pd.tslib.Timedelta(days=postchurn_time))
+        post_leave_df = activity_dates_range_df(db, db_user, table, app_user, date1, date2)
+        if len(pre_leave_df) > prechurn_act and len(post_leave_df) > postchurn_act:
+            series = pd.Series([app_user, row.date.date(), len(pre_leave_df), len(post_leave_df)], index=['user_id', 'churn_date', 'No_prechurn_activities', 'No_postchurn_activities'])
+            good_churns = good_churns.append(series, ignore_index=True)
+    return good_churns
+
+    def idendify_good_churn_across_user(db, db_user, table, user_ids, leave_time, prechurn_time, prechurn_act, postchurn_time, postchurn_act):
+    # Create a Pandas DataFrame containing the time regions that qualify
+    # as good churn for a list of users given the user_ids, leave_time (days), prechurn_time (days), prechurn activity
+    # postchurn_time (days) and postchurn activity.
+    #
+    good_churns = pd.DataFrame(columns= ['user_id', 'churn_date', 'No_prechurn_activities', 'No_postchurn_activities'])
+    for user_id in user_ids:
+        churn = idendify_good_churn_user(db, db_user, table, user_id, leave_time, prechurn_time, prechurn_act, postchurn_time, postchurn_act)
+        good_churns = good_churns.append(churn, ignore_index=True)
+    return good_churns
+        

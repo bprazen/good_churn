@@ -4,9 +4,21 @@ from sqlalchemy import create_engine
 
 # note: need to determine how to deal with tables that have user_id insted of sender_id
 def user_df(db, db_user, table):
-    # Create a Pandas DataFrame containing the user_id, first activity (start_date)
-    # latest activity (stop_date)
-    #
+    '''Create a Pandas DataFrame containing the user_id, first activity (start_date)
+    latest activity (stop_date) through a db querry
+
+    Parameters
+    ----------
+    db: string containing name of local postgreSQL data base
+    db_user: string containing the user name for login to database
+    table: the database table to querry
+
+    Returns
+    -------
+
+    Example
+    -------
+    '''
     conn = pg2.connect(dbname=db, user=db_user, host='localhost')
     cur = conn.cursor()
     sql ='''
@@ -132,7 +144,7 @@ def record_table(db, db_user, table):
     # Save tables that are timeconsuming to creat in postgreSQL DB
     engine_str = 'postgresql://{}@localhost:5432/{}'.format(db_user, db)
     engine = create_engine(engine_str)
-    user_stats.to_sql(table, engine)
+    table.to_sql(table, engine)
     return
 
 def activity_dates_range_df(db, db_user, table, app_user, date1, date2):

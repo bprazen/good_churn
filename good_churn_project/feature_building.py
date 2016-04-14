@@ -3,8 +3,10 @@ import pandas as pd
 
 
 def feature_maker(db, db_user, user_id, date1, date2):
-    # construct a feature set for a user in time range
-    #
+    ''' construct a feature set for a user in time range
+    Calls on following tables: answer_likes, answers, connections, notifications
+    user_stats and users.
+    '''
     conn = pg2.connect(dbname=db, user=db_user, host='localhost')
     cur = conn.cursor()
     sql = '''SELECT count(answer_id)
@@ -74,8 +76,21 @@ def feature_maker(db, db_user, user_id, date1, date2):
     bd = cur.fetchall()
     age = (pd.tslib.Timestamp('2016-04-04')-bd[0][0])
     age = age.days/365.0
-    
+
     conn.close()
     return [user_id, int(answer_likes[0][0]), int(answers[0][0]),
     int(accepted_connections[0][0]), int(made_connections[0][0]),
     int(send_notification[0][0]), int(median_away[0][0]), age]
+
+def feature_df_maker(db, db_user, user_list, date1, date2):
+    '''
+    Constructs feature DataFrame for list of users.
+    '''
+    feature_df = pd.DataFrame(columns= ['user_id', 'answer_likes', 'answers',
+    'accepted_connections', 'made_connections',
+    'send_notification', 'median_away', 'age'])
+    for user in user_list:
+        features = pd.Series(feature_maker(db, db_user, user, date1, date2), index= ['user_id', 'answer_likes', 'answers',
+         'accepted_connections', 'made_connections','send_notification', 'median_away', 'age'])
+        feature_matrix = feature_matrix.append(features, ignore_index=True)
+    return feature_df

@@ -92,5 +92,5 @@ def feature_df_maker(db, db_user, user_list, date1, date2):
     for user in user_list:
         features = pd.Series(feature_maker(db, db_user, user, date1, date2), index= ['user_id', 'answer_likes', 'answers',
          'accepted_connections', 'made_connections','send_notification', 'median_away', 'age'])
-        feature_matrix = feature_matrix.append(features, ignore_index=True)
+        feature_df = feature_df.append(features, ignore_index=True)
     return feature_df

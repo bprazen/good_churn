@@ -1,3 +1,4 @@
+import numpy as np
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 
@@ -33,3 +34,28 @@ def plot_importance(clf, X, max_features=10):
     plt.yticks(pos, feature_names)
     plt.xlabel('Relative Importance')
     plt.title('Variable Importance')
+
+def ROC_values(score, y):
+    # adopted form stackoverflow
+    roc_x = []
+    roc_y = []
+    min_score = min(score)
+    max_score = max(score)
+    thr = np.linspace(min_score, max_score, 30)
+    FP=0
+    TP=0
+    N = sum(y)
+    P = len(y) - N
+
+    for (i, T) in enumerate(thr):
+        for i in range(0, len(score)):
+            if (score[i] > T):
+                if (y[i]==1):
+                    TP = TP + 1
+                if (y[i]==0):
+                    FP = FP + 1
+        roc_x.append(FP/float(N))
+        roc_y.append(TP/float(P))
+        FP=0
+        TP=0
+    return roc_x, roc_y

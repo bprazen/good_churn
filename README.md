@@ -27,7 +27,7 @@ The above image is a histogram showing the mean hours between activity for each 
 
 The above image shows the cumulative maximum days between activities for all users. There is a long tail of users that took long breaks, but being gone for 2 weeks is a relatively rare event yet contained enough users to model.
 
-<img src="https://github.com/bprazen/good_churn/blob/master/images/good_churn_diagram.png" alt="Good Churn Diagram" width=500>
+<img src="https://github.com/bprazen/good_churn/blob/master/images/good_churn_diagram.png" alt="Good Churn Diagram" width=800>
 
 The above image illustrates the criteria used to label "good" churn or users that left the app but later returned. These users had a period of 2 weeks without activity and then returned. The other class of users, bad churn, were those that fit this criteria but did not return and have not been active for 200 days.
 
@@ -35,7 +35,7 @@ Because I am combining churn events that happened at different times and users j
 
 ##Modeling
 
-<img src="https://github.com/bprazen/good_churn/blob/master/images/pipeline.png" alt="Analysis Pipeline" width=700>
+<img src="https://github.com/bprazen/good_churn/blob/master/images/pipeline.png" alt="Analysis Pipeline" width=800>
 
 Above is a diagram showing the data analysis pipeline. Text data from user's comments was transformed using Term Frequency–Inverse Document Frequency (TF-IDF) and reduced to 15 variables Singular Value Decomposition (SVD). Records of user activity were summarized in seven features and combined with text features, a count of the number of words in user's comments, the number of comments and their age.
 
@@ -47,6 +47,6 @@ The above graph is a Receiver Operator Characteristic (ROC) graph summarizing Ra
 
 ##Feature Importances
 
-<img src="https://github.com/bprazen/good_churn/blob/master/images/features.png" alt="features" width=500>
+<img src="https://github.com/bprazen/good_churn/blob/master/images/features.png" alt="features" width=800>
 
 The above graph depicts the contribution of the major features to the model. The average time between all activities is the most important feature. Comment length is simple the number of words in users' comments.  “Text Features”  were features built using the words included in users’ comments.

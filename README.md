@@ -35,7 +35,7 @@ Because I am combining churn events that happened at different times and users j
 
 ##Modeling
 
-<img src="https://github.com/bprazen/good_churn/blob/master/images/pipeline.png" alt="Analysis Pipeline" width=500>
+<img src="https://github.com/bprazen/good_churn/blob/master/images/pipeline.png" alt="Analysis Pipeline" width=700>
 
 Above is a diagram showing the data analysis pipeline. Text data from user's comments was transformed using Term Frequency–Inverse Document Frequency (TF-IDF) and reduced to 15 variables Singular Value Decomposition (SVD). Records of user activity were summarized in seven features and combined with text features, a count of the number of words in user's comments, the number of comments and their age.
 

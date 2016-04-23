@@ -102,9 +102,6 @@ def train_text_clusters3(db, db_user, train_user_df, no_SVs):
     model = vectorizer.fit_transform(response_df['response_text'])
     svd = TruncatedSVD(n_components = no_SVs)
     svdMatrix = svd.fit_transform(model)
-    #km = KMeans(n_clusters=no_clusters, init='k-means++', max_iter=100, n_init=10, n_jobs=-1, random_state=49)
-    #response_df['response_clusters'] = km.fit(model).labels_
-    #just_dummies = pd.get_dummies(response_df['response_clusters'], prefix='text')
     response_df = pd.concat([response_df.user_id, response_df.response_len, pd.DataFrame(svdMatrix)], axis=1)
     return response_df, vectorizer, svd
 
@@ -128,7 +125,6 @@ def test_text_clusters(db, db_user, test_user_ids, vectorizer_model, km_model):
     test_data_vect = vectorizer_model.transform(answer_df['answer_text'])
     answer_df['answers_clusters'] = km_model.predict(test_data_vect)
     just_dummies = pd.get_dummies(answer_df['answers_clusters'], prefix='text')
-    #answer_df = pd.concat([answer_df, just_dummies], axis=1)
     answer_df = pd.concat([answer_df.user_id, just_dummies], axis=1)
     return answer_df
 
@@ -199,12 +195,7 @@ def test_text_clusters3(db, db_user, test_user_df, vectorizer_model, svd):
 
     test_data_vect = vectorizer_model.transform(response_df['response_text'])
 
-    svdMatrix = svd.fit(test_data_vect)
-    #response_df['response_clusters'] = km_model.predict(test_data_vect)
-    #f_list = range(km_model.n_clusters)
-    #just_dummies = pd.get_dummies(list(response_df['response_clusters'].values) + f_list, prefix='text')
-    #neg_feature = -km_model.n_clusters
-    #just_dummies = just_dummies[:neg_feature]
+    svdMatrix = svd.transform(test_data_vect)
     response_df = pd.concat([response_df.user_id, response_df.response_len, pd.DataFrame(svdMatrix)], axis=1)
     return response_df
 

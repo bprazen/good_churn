@@ -19,9 +19,9 @@ My approach to understanding “good churn" was to see if I could predict users 
 
 The most challenging part of the analysis was labeling users and determining the time window of the data to be used in the analysis. I considered churn as not submitting comments, liking comments, making connections or sending notifications for a period of two weeks.  
 
-<img src="https://github.com/bprazen/good_churn/images/mean_act_hist.png" alt="Mean Activity Histogram" width=500>
+<img src="https://github.com/bprazen/good_churn/blob/master/images/Full_Mean_Activity.png" alt="Mean Activity Histogram" width=500>
 
-The above image is a histogram showing the mean hours between activity for each user. Most users have a mean less than 1.5 hours. This is due to bursts of activity, where the use does multiple activities when opening the app. This makes activity distributions difficult to interpret.
+The above image is a histogram showing the mean hours between activity for each user. Most users have a mean less than 1 hour. This is due to bursts of activity, where the use does multiple activities when opening the app. This makes activity distributions difficult to interpret.
 
 <img src="https://github.com/bprazen/good_churn/blob/master/images/cumlative_max.png" alt="Maximum time between activities" width=500>
 
@@ -33,21 +33,20 @@ The above image illustrates the criteria used to label "good" churn or users tha
 
 Because I am combining churn events that happened at different times and users joined the community at different times, I only used data from 2 weeks before each user “churned.”  In other words, I built a model that could be used to predict if a user that has not been active for two weeks will return using data from the two weeks before they left.
 
-I also selected a third set of users to demonstrate the mode. These users had no activity in the last 14 to 28 days of the dataset. Presumably my model would predict which of this set would return to the app.
-
-
 ##Modeling
 
-img src="https://github.com/bprazen/good_churn/images/analysis_pipeline.png" alt="Analysis Pipeline" width=500>
+img src="https://github.com/bprazen/good_churn/blob/master/images/pipeline.png" alt="Analysis Pipeline" width=500>
 
-Text data from user's comments was transformed using Term Frequency–Inverse Document Frequency (TF-IDF) and reduced to 15 variables singular value decomposition (SVD). Records of user activity were summarized in seven features and combined with text features, a count of the number of words in user's comments, the number of comments and their age.
+Above is a diagram showing the data analysis pipeline. Text data from user's comments was transformed using Term Frequency–Inverse Document Frequency (TF-IDF) and reduced to 15 variables Singular Value Decomposition (SVD). Records of user activity were summarized in seven features and combined with text features, a count of the number of words in user's comments, the number of comments and their age.
 
 A classification model was built using Random Forest. A number of other ensemble classification techniques performed equally well and the ensemble techniques performed better than the decision trees or logistic regression.
 
-img src="https://github.com/bprazen/good_churn/images/roc.png" alt="Analysis Pipeline" width=500>
+img src="https://github.com/bprazen/good_churn/blob/master/images/roc.png" alt="roc" width=500>
 
 The above graph is a Receiver Operator Characteristic (ROC) graph summarizing Random Forest model’s ability to correctly classify users from a set of validation data that was not used to build the model. The area under the curve for this model is 0.88.
 
 ##Feature Importances
 
-The above graph depicts the contribution of the major features to the model. The average time between all activities is the most important feature. Comment length is simple the number of words in their comments.  “Text Features”  were features built using the words included in users’ comments.
+img src="https://github.com/bprazen/good_churn/blob/master/images/features.png" alt="features" width=500>
+
+The above graph depicts the contribution of the major features to the model. The average time between all activities is the most important feature. Comment length is simple the number of words in users' comments.  “Text Features”  were features built using the words included in users’ comments.

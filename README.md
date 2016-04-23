@@ -23,11 +23,11 @@ The most challenging part of the analysis was labeling users and determining the
 
 The above image is a histogram showing the mean hours between activity for each user. Most users have a mean less than 1.5 hours. This is due to bursts of activity, where the use does multiple activities when opening the app. This makes activity distributions difficult to interpret.
 
-<img src="https://github.com/bprazen/good_churn/tree/master/images/cumlative_max.png" alt="Maximum time between activities" width=500>
+<img src="https://github.com/bprazen/good_churn/blob/master/images/cumlative_max.png" alt="Maximum time between activities" width=500>
 
 The above image shows the cumulative maximum days between activities for all users. There is a long tail of users that took long breaks, but being gone for 2 weeks is a relatively rare event yet contained enough users to model.
 
-<img src="https://github.com/bprazen/good_churn/tree/master/images/good_churn_diagram.png" alt="Good Churn Diagram" width=500>
+<img src="https://github.com/bprazen/good_churn/blob/master/images/good_churn_diagram.png" alt="Good Churn Diagram" width=500>
 
 The above image illustrates the criteria used to label "good" churn or users that left the app but later returned. These users had a period of 2 weeks without activity and then returned. The other class of users, bad churn, were those that fit this criteria but did not return and have not been active for 200 days.
 

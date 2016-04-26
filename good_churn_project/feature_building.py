@@ -6,6 +6,22 @@ def feature_maker(db, db_user, user_id, date1, date2):
     ''' construct a feature set for a user in time range
     Calls on following tables: answer_likes, answers, connections, notifications
     user_stats and users.
+
+    Parameters
+    ----------
+    db: string containing name of local postgreSQL data base
+    db_user: string containing the user name for login to database
+    user_id:
+    date1:
+    date2:
+
+    Returns
+    -------
+    table containing the features
+
+    Example
+    -------
+
     '''
     conn = pg2.connect(dbname=db, user=db_user, host='localhost')
     cur = conn.cursor()
@@ -74,15 +90,6 @@ def feature_maker(db, db_user, user_id, date1, date2):
     '''.format(user_id)
     cur.execute(sql)
     avg_away = cur.fetchall()
-
-    #sql = '''SELECT first_use
-    #FROM user_stats
-    #WHERE app_user = {}
-    #;
-    #'''.format(user_id)
-    #cur.execute(sql)
-    #time_w_app = date2 - cur.fetchall()[0][0]
-    #time_w_app = time_w_app.days
 
     sql = '''SELECT birthdate
     FROM users

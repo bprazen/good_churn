@@ -2,10 +2,10 @@ import psycopg2 as pg2
 import pandas as pd
 from sqlalchemy import create_engine
 
-# note: need to determine how to deal with tables that have user_id insted of sender_id
+
 def user_df_maker(db, db_user, table):
-    '''Create a Pandas DataFrame containing the user_id, first activity (start_date)
-    latest activity (stop_date) through a db querry
+    '''Create a Pandas DataFrame containing the user_id, first activity
+    (start_date) latest activity (stop_date) through a db query
 
     Parameters
     ----------
@@ -19,29 +19,45 @@ def user_df_maker(db, db_user, table):
 
     Example
     -------
-    >>>users_df = user_df_maker(db, db_user, 'activity')
-    >>>users_df.user_id[1:3].values
-    [ 251.,  2848.]
+    >>> users_df = data_collection.user_df_maker(db, db_user, 'answers')
+    >>> users_df.user_id[1:3].values
+    array([2848, 3565])
     '''
     conn = pg2.connect(dbname=db, user=db_user, host='localhost')
     cur = conn.cursor()
-    sql ='''
-    SELECT sender_id, MIN(created_at) AS start_date, MAX(created_at) AS stop_date, count(created_at) AS activity_count
-    FROM {}
-    GROUP BY sender_id
+    column_qurey = '''
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='{}'
     ;
     '''.format(table)
+    cur.execute(column_qurey)
+    columns = cur.fetchall()
+    columns = [c[0] for c in columns]
+    if 'created_at' in columns:
+        created = 'created_at'
+    else:
+        created = 'date'
+
+    sql = '''
+    SELECT user_id, MIN({}) AS start_date,
+    MAX({}) AS stop_date,
+    count({}) AS activity_count
+    FROM {}
+    GROUP BY user_id
+    ;
+    '''.format(created, created, created, table)
     cur.execute(sql)
-    user_df = pd.DataFrame(cur.fetchall(), columns= ['user_id', 'start_date', 'stop_date', 'activity_count'])
+    user_df = pd.DataFrame(cur.fetchall(), columns=['user_id', 'start_date',
+                                                    'stop_date',
+                                                    'activity_count'])
     conn.close()
     return user_df
+
 
 def activity_dates_df(db, db_user, table, app_user):
     ''' Create a Pandas DataFrame that shows the time before the
     next activity for a given user.
-    DataFrame contains the activity date, next ativity date and time before next activity
-    for a given app user.
-
 
     Parameters
     ----------
@@ -52,15 +68,21 @@ def activity_dates_df(db, db_user, table, app_user):
 
     Returns
     -------
+    DataFrame containing the activity date, next ativity date and time before
+    next activity for a given app user.
 
     Example
     -------
+    >>> act_df = data_collection.activity_dates_df(db, db_user, 'activity', 2848)
+    >>> act_df.date[1]
+    Timestamp('2015-01-19 22:27:33.266120')
     '''
     conn = pg2.connect(dbname=db, user=db_user, host='localhost')
     cur = conn.cursor()
     sql = 'SELECT date FROM {} WHERE user_id = {};'.format(table, int(app_user))
     cur.execute(sql)
-    activity_dates = pd.DataFrame(cur.fetchall(), columns= ['date']).sort(['date'], ascending=True)
+    activity_dates = pd.DataFrame(cur.fetchall(),
+    columns= ['date']).sort(['date'], ascending=True)
     next_activity = activity_dates['date'][1:]
     activity_dates = activity_dates[:len(activity_dates)-1]
     next_activity.index = activity_dates.index
@@ -70,11 +92,28 @@ def activity_dates_df(db, db_user, table, app_user):
     return activity_dates
 
 def user_stats_df(db, db_user, table):
-    # Create a Pandas DataFrame containing the activity statistics for a list of users.
-    #
+    ''' Create a Pandas DataFrame containing the activity statistics for a list
+    of users.
+
+    Parameters
+    ----------
+    db: string containing name of local postgreSQL data base
+    db_user: string containing the user name for login to database
+    table: string containing the database table to querry
+
+    Returns
+    -------
+    DataFrame containing the activity statistics.
+
+    Example
+    -------
+    >>> stats_df = data_collection.user_stats_df(db, db_user, 'activity')
+    >>> len(stats_df)
+    13588
+    '''
     user_stats = pd.DataFrame(columns= ['app_user','first_use', 'last_use', 'time_with_app', 'num_uses',
                                          'min_away', 'max_away', 'avg_away', 'median_away'])
-    user_table = user_df(db, db_user, table)
+    user_table = user_df_maker(db, db_user, table)
     for user_id in user_table['user_id']:
         # Addresses data that does not contain a user_id
         if not user_id > 0:
@@ -105,10 +144,11 @@ def user_stats_df(db, db_user, table):
                                                       index=['app_user','first_use', 'last_use', 'time_with_app', 'num_uses',
                                                              'min_away', 'max_away', 'avg_away', 'median_away']), ignore_index=True)
 
-        return user_stats
+    return user_stats
 
 def import_user_stats(db, db_user):
-    ''' Pull user_stats table from database.
+    '''
+    Pull user_stats table from database.
 
     Parameters
     ----------
@@ -117,18 +157,25 @@ def import_user_stats(db, db_user):
 
     Returns
     -------
-    DataFrame containing data from user_stats table which was added to the the database previously.
+    DataFrame containing data from user_stats table which was added to the the
+    database.
 
     Example
     -------
     '''
     conn = pg2.connect(dbname=db, user=db_user, host='localhost')
     cur = conn.cursor()
-    sql ='''SELECT app_user, first_use, last_use, time_with_app, num_uses, min_away, max_away, avg_away, median_away
+    sql ='''SELECT app_user, first_use, last_use, time_with_app, num_uses,
+    min_away, max_away, avg_away, median_away
     FROM user_stats;
     '''
     cur.execute(sql)
-    user_stats = pd.DataFrame(cur.fetchall(), columns= ['app_user', 'first_use', 'last_use', 'time_with_app', 'num_uses', 'min_away', 'max_away', 'avg_away', 'median_away'])
+    user_stats = pd.DataFrame(cur.fetchall(), columns= ['app_user', 'first_use',
+                                                        'last_use',
+                                                        'time_with_app',
+                                                        'num_uses', 'min_away',
+                                                        'max_away', 'avg_away',
+                                                        'median_away'])
     conn.close()
     user_stats.time_with_app = pd.to_timedelta(user_stats.time_with_app, unit='ns')
     user_stats.min_away = pd.to_timedelta(user_stats.min_away, unit='ns')
@@ -138,9 +185,22 @@ def import_user_stats(db, db_user):
     return user_stats
 
 def create_activity_table(db, db_user):
-    # Create a PostgreSQL table containing user activity from multiple tables
-    # This wil be used to classify users as active and inactive during different periods
-    #
+    '''
+    Create a table in the PostgreSQL data base containing user activity from
+    multiple tables.
+    This fuction is used to classify users as active and inactive during
+    different time periods.
+
+    Parameters
+    ----------
+    db: string containing name of local postgreSQL data base
+    db_user: string containing the user name for login to database
+
+    Returns
+    -------
+    table size
+
+    '''
     conn = pg2.connect(dbname=db, user=db_user, host='localhost')
     cur = conn.cursor()
     cur.execute('''CREATE TABLE activity AS
@@ -169,9 +229,19 @@ def create_activity_table(db, db_user):
 
 
 def count_active(db, db_user, table, last_date):
-    # Count the users that are active beyond a date. Last date formated like '2016-03-01'
-    #
-    #
+    '''
+    Count the users that are active beyond a date.
+
+    Parameters
+    ----------
+    db: string containing name of local postgreSQL data base
+    db_user: string containing the user name for login to database
+    last_date: string formated like '2016-03-01'
+
+    Returns
+    -------
+    count
+    '''
     conn = pg2.connect(dbname=db, user=db_user, host='localhost')
     cur = conn.cursor()
     sql = '''WITH    churn AS
@@ -191,7 +261,21 @@ def count_active(db, db_user, table, last_date):
     return count
 
 def record_table(db, db_user, table):
-    # Save tables that are timeconsuming to creat in postgreSQL DB
+    '''
+    Save tables that are timeconsuming to creat in postgreSQL DB
+    Parameters
+    ----------
+    db: string containing name of local postgreSQL data base
+    db_user: string containing the user name for login to database
+    table: string containing the database table to create
+
+    Returns
+    -------
+    nothing
+
+    Example
+    -------
+    '''
     engine_str = 'postgresql://{}@localhost:5432/{}'.format(db_user, db)
     engine = create_engine(engine_str)
     table.to_sql(table, engine)
@@ -203,41 +287,16 @@ def activity_dates_range_df(db, db_user, table, app_user, date1, date2):
     #
     conn = pg2.connect(dbname=db, user=db_user, host='localhost')
     cur = conn.cursor()
-    sql = "SELECT date, id FROM {} WHERE user_id = {} AND date > '{}' AND date < '{}';".format(table, int(app_user), date1, date2)
+    sql = '''
+    SELECT date, id
+    FROM {}
+    WHERE user_id = {}
+    AND date > '{}'
+    AND date < '{}';'''.format(table, int(app_user), date1, date2)
     cur.execute(sql)
-    activity_dates = pd.DataFrame(cur.fetchall(), columns= ['date', 'id']).sort(['date'], ascending=True)
+    activity_dates = pd.DataFrame(cur.fetchall(),
+                                    columns= ['date', 'id']).sort(['date'],
+                                    ascending=True)
     conn.close()
     activity_dates = activity_dates.reset_index(drop=True)
     return activity_dates
-
-def idendify_good_churn_user(db, db_user, table, app_user, leave_time, prechurn_time, prechurn_act, postchurn_time, postchurn_act):
-    # Create a Pandas DataFrame containing the time regions that qualify
-    # as good churn for a user given the leave_time (days), prechurn_time (days), prechurn activity
-    # postchurn_time (days) and postchurn activity.
-    #
-    act_one_user = activity_dates_df(db, db_user, table, app_user) # activity for each user
-    activity_on_leaving = act_one_user[act_one_user.dif_time > pd.tslib.Timedelta(days=leave_time)] # activities that are followed by exess leave
-    activity_on_leaving = activity_on_leaving.reset_index(drop=True)
-    good_churns = pd.DataFrame(columns= ['user_id', 'churn_date', 'No_prechurn_activities', 'No_postchurn_activities'])
-    for index, row in activity_on_leaving.iterrows(): # for each activity that is before excess leave, churn
-        date1 = str(row.date.date()-pd.tslib.Timedelta(days=prechurn_time))
-        date2 = str(row.date.date())
-        pre_leave_df = activity_dates_range_df(db, db_user, table, app_user, date1, date2) # activity in the time range before the churn
-        date1 = str(row.next.date())
-        date2 = str(row.next.date()+pd.tslib.Timedelta(days=postchurn_time))
-        post_leave_df = activity_dates_range_df(db, db_user, table, app_user, date1, date2) # activity after the churn
-        if len(pre_leave_df) > prechurn_act and len(post_leave_df) > postchurn_act: # only keep values with enough activity
-            series = pd.Series([app_user, row.date.date(), len(pre_leave_df), len(post_leave_df)], index=['user_id', 'churn_date', 'No_prechurn_activities', 'No_postchurn_activities'])
-            good_churns = good_churns.append(series, ignore_index=True)
-    return good_churns
-
-def idendify_good_churn_across_user(db, db_user, table, user_ids, leave_time, prechurn_time, prechurn_act, postchurn_time, postchurn_act):
-    # Create a Pandas DataFrame containing the time regions that qualify
-    # as good churn for a list of users given the user_ids, leave_time (days), prechurn_time (days), prechurn activity
-    # postchurn_time (days) and postchurn activity.
-    #
-    good_churns = pd.DataFrame(columns= ['user_id', 'churn_date', 'No_prechurn_activities', 'No_postchurn_activities'])
-    for user_id in user_ids:
-        churn = idendify_good_churn_user(db, db_user, table, user_id, leave_time, prechurn_time, prechurn_act, postchurn_time, postchurn_act)
-        good_churns = good_churns.append(churn, ignore_index=True)
-    return good_churns

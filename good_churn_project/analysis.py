@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 
 def plot_confusion_matrix(model, X_test, y_true):
-    '''Code stolen brazenly from sklearn example.'''
+    '''Code stolen from sklearn example.'''
     cm = confusion_matrix(y_true, model.predict(X_test))
 
     print(cm)

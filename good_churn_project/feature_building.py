@@ -3,7 +3,8 @@ import pandas as pd
 
 
 def feature_maker(db, db_user, user_id, date1, date2):
-    ''' construct a feature set for a user in time range
+    '''
+    Constructs a feature set for a user in time range
     Calls on following tables: answer_likes, answers, connections, notifications
     user_stats and users.
 
@@ -11,13 +12,13 @@ def feature_maker(db, db_user, user_id, date1, date2):
     ----------
     db: string containing name of local postgreSQL data base
     db_user: string containing the user name for login to database
-    user_id:
-    date1:
-    date2:
+    user_id: int containing user id
+    date1: string containing the earliest day of the time window
+    date2: string containing the last day of the time window
 
     Returns
     -------
-    table containing the features
+    list containing the features
 
     Example
     -------
@@ -106,22 +107,24 @@ def feature_maker(db, db_user, user_id, date1, date2):
     int(accepted_connections[0][0]), int(made_connections[0][0]),
     int(send_notification[0][0]), int(median_away[0][0]), int(avg_away[0][0]), age]
 
-def feature_df_maker(db, db_user, user_list, date1, date2):
-    '''
-    Constructs feature DataFrame for list of users.
-    '''
-    feature_df = pd.DataFrame(columns= ['user_id', 'answer_likes', 'answers',
-    'accepted_connections', 'made_connections',
-    'send_notification', 'median_away', 'avg_away','age'])
-    for user in user_list:
-        features = pd.Series(feature_maker(db, db_user, user, date1, date2), index= ['user_id', 'answer_likes', 'answers',
-         'accepted_connections', 'made_connections','send_notification', 'avg_away', 'age'])
-        feature_df = feature_df.append(features, ignore_index=True)
-    return feature_df
 
-def feature_df_maker2(db, db_user, user_df):
+def feature_df_maker(db, db_user, user_df):
     '''
     Constructs feature DataFrame for list of users.
+
+    Parameters
+    ----------
+    db: string containing name of local postgreSQL data base
+    db_user: string containing the user name for login to database
+    user_df: dataframe containing user_id, earliest day of the time window
+    (pre_churn_date) and the last day of the time window (churn_date)
+
+    Returns
+    -------
+    Pandas DataFrame containing the features for each user
+
+    Example
+    -------
     '''
     feature_df = pd.DataFrame(columns= ['user_id', 'response_likes', 'no_responses',
     'accepted_connections', 'made_connections',

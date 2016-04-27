@@ -25,13 +25,13 @@ The above image is a histogram showing the mean hours between activity for each 
 
 <img src="https://github.com/bprazen/good_churn/blob/master/images/cumlative_max.png" alt="Maximum time between activities" width=500>
 
-The above image shows the cumulative maximum days between activities for all users. There is a long tail of users that took long breaks, but being gone for 2 weeks is a relatively rare event yet contained enough users to model.
+The above image shows the cumulative maximum days between activities for all users. There is a long tail of users that took long breaks, but being gone for 4 weeks is a relatively rare event yet contained enough users to model.
 
 <img src="https://github.com/bprazen/good_churn/blob/master/images/good_churn_diagram.png" alt="Good Churn Diagram" width=600>
 
-The above image illustrates the criteria used to label "good" churn or users that left the app but later returned. These users had a period of 2 weeks without activity and then returned. The other class of users, bad churn, were those that fit this criteria but did not return and have not been active for 200 days.
+The above image illustrates the criteria used to label "good" churn or users that left the app but later returned. These users had a period of 4 weeks without activity and then returned. The other class of users, bad churn, were those that fit this criteria but did not return and have not been active for 200 days.
 
-Because I am combining churn events that happened at different times and users joined the community at different times, I only used data from 2 weeks before each user “churned.”  In other words, I built a model that could be used to predict if a user that has not been active for two weeks will return using data from the two weeks before they left.
+Because I am combining churn events that happened at different times and users joined the community at different times, I only used data from 2 weeks before each user “churned.”  In other words, I built a model that could be used to predict if a user that has not been active for four or more weeks will return using data from the two weeks before they left.
 
 ##Modeling
 

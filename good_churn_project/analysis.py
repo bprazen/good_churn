@@ -18,7 +18,10 @@ def plot_confusion_matrix(model, X_test, y_true):
     plt.show()
 
 def plot_importance(clf, X, max_features=10):
-    '''Plot feature importance'''
+    '''
+    Plot feature importance
+    code from lecture
+    '''
     feature_importance = clf.feature_importances_
     # make importances relative to max importance
     feature_importance = 100.0 * (feature_importance / feature_importance.max())
@@ -36,7 +39,9 @@ def plot_importance(clf, X, max_features=10):
     plt.title('Variable Importance')
 
 def ROC_values(score, y):
-    # adopted form stackoverflow
+    '''
+    code adopted from stackoverflow
+    '''
     roc_x = []
     roc_y = []
     min_score = min(score)
